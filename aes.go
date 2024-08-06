@@ -60,7 +60,7 @@ func AESEncryptECB(plainText string, aesKey []byte) (string, error) {
 	}
 
 	// Return the base64-encoded encrypted data
-	return base64.RawURLEncoding.EncodeToString(encrypted), nil
+	return base64.StdEncoding.EncodeToString(encrypted), nil
 }
 
 // AES decrypt using ECB mode
@@ -72,7 +72,7 @@ func AESDecryptECB(cipherText string, aesKey []byte) ([]byte, error) {
 	}
 
 	// Decode the base64-encoded input
-	decoded, err := base64.RawURLEncoding.DecodeString(cipherText)
+	decoded, err := base64.StdEncoding.DecodeString(cipherText)
 	if err != nil {
 		return nil, err
 	}
