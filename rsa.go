@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/pem"
+	"errors"
 	"fmt"
 )
 
@@ -86,19 +87,34 @@ func RSASign(privKey []byte, data []byte) (sign string, err error) {
 	h := hash.New()
 	h.Write(data)
 	hashed := h.Sum(nil)
+
 	block, _ := pem.Decode(privKey)
 	if block == nil {
-		err = fmt.Errorf("private key error")
+		err = errors.New("failed to decode PEM block containing the key")
 		return
 	}
-	priv, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+
+	// First, try to parse as a PKCS1 private key
+	var priv *rsa.PrivateKey
+	if priv, err = x509.ParsePKCS1PrivateKey(block.Bytes); err != nil {
+		// If that fails, try to parse as a PKCS8 private key
+		var privInterface interface{}
+		if privInterface, err = x509.ParsePKCS8PrivateKey(block.Bytes); err != nil {
+			return
+		}
+		var ok bool
+		priv, ok = privInterface.(*rsa.PrivateKey)
+		if !ok {
+			err = errors.New("not an RSA private key")
+			return
+		}
+	}
+
+	signature, err := rsa.SignPKCS1v15(rand.Reader, priv, crypto.SHA256, hashed)
 	if err != nil {
 		return
 	}
-	signature, err := rsa.SignPKCS1v15(rand.Reader, priv, hash, hashed)
-	if err != nil {
-		return
-	}
+
 	sign = base64.StdEncoding.EncodeToString(signature)
 	return
 }
