@@ -9,6 +9,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 var (
@@ -39,6 +40,7 @@ func CreateKeyPair() (pub, privPKCS8, privPKCS1 string, err error) {
 
 // RSAEncrypt encrypts the given data with the provided PEM-encoded RSA public key.
 func RSAEncrypt(pubKey []byte, data []byte) ([]byte, error) {
+	pubKey = []byte(FormatRSAPublicKey(string(pubKey)))
 	block, _ := pem.Decode(pubKey)
 	if block == nil {
 		return nil, fmt.Errorf("public key error")
@@ -56,6 +58,7 @@ func RSAEncrypt(pubKey []byte, data []byte) ([]byte, error) {
 
 // RSADecrypt decrypts the given data with the provided PEM-encoded RSA private key.
 func RSADecrypt(privKey []byte, data []byte) ([]byte, error) {
+	privKey = []byte(FormatRSAPrivKey(string(privKey)))
 	block, _ := pem.Decode(privKey)
 	if block == nil {
 		return nil, fmt.Errorf("private key error")
@@ -83,6 +86,7 @@ func RSADecrypt(privKey []byte, data []byte) ([]byte, error) {
 
 // RSASign signs the given data with the provided PEM-encoded RSA private key.
 func RSASign(privKey []byte, data []byte) (sign string, err error) {
+	privKey = []byte(FormatRSAPrivKey(string(privKey)))
 	hash := crypto.SHA256
 	h := hash.New()
 	h.Write(data)
@@ -121,6 +125,7 @@ func RSASign(privKey []byte, data []byte) (sign string, err error) {
 
 // RSAVerify verifies the given base64-encoded signature with the provided PEM-encoded RSA public key.
 func RSAVerify(pubKey, data []byte, base64Sign string) error {
+	pubKey = []byte(FormatRSAPublicKey(string(pubKey)))
 	hash := crypto.SHA256
 	h := hash.New()
 	h.Write(data)
@@ -143,26 +148,26 @@ func RSAVerify(pubKey, data []byte, base64Sign string) error {
 	return rsa.VerifyPKCS1v15(pub, hash, hashed, sign)
 }
 
-// func FormatRSAPublicKey(public string) string {
-// 	if !strings.Contains(public, "-----BEGIN RSA PUBLIC KEY-----") {
-// 		// 添加头
-// 		public = fmt.Sprintf("-----BEGIN RSA PUBLIC KEY-----\n%s", public)
-// 	}
-// 	if !strings.Contains(public, "-----END RSA PUBLIC KEY-----") {
-// 		// 添加尾
-// 		public = fmt.Sprintf("%s\n-----END RSA PUBLIC KEY-----", public)
-// 	}
-// 	return public
-// }
+func FormatRSAPublicKey(public string) string {
+	if !strings.Contains(public, "-----BEGIN RSA PUBLIC KEY-----") {
+		// 添加头
+		public = fmt.Sprintf("-----BEGIN RSA PUBLIC KEY-----\n%s", public)
+	}
+	if !strings.Contains(public, "-----END RSA PUBLIC KEY-----") {
+		// 添加尾
+		public = fmt.Sprintf("%s\n-----END RSA PUBLIC KEY-----", public)
+	}
+	return public
+}
 
-// func FormatRSAPrivKey(priv string) string {
-// 	if !strings.Contains(priv, "-----BEGIN RSA PRIVATE KEY-----") {
-// 		// 添加头
-// 		priv = fmt.Sprintf("-----BEGIN RSA PRIVATE KEY-----\n%s", priv)
-// 	}
-// 	if !strings.Contains(priv, "-----END RSA PRIVATE KEY-----") {
-// 		// 添加尾
-// 		priv = fmt.Sprintf("%s\n-----END RSA PRIVATE KEY-----", priv)
-// 	}
-// 	return priv
-// }
+func FormatRSAPrivKey(priv string) string {
+	if !strings.Contains(priv, "-----BEGIN RSA PRIVATE KEY-----") {
+		// 添加头
+		priv = fmt.Sprintf("-----BEGIN RSA PRIVATE KEY-----\n%s", priv)
+	}
+	if !strings.Contains(priv, "-----END RSA PRIVATE KEY-----") {
+		// 添加尾
+		priv = fmt.Sprintf("%s\n-----END RSA PRIVATE KEY-----", priv)
+	}
+	return priv
+}
