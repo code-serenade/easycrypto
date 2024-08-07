@@ -1,3 +1,3 @@
-module github.com/CodeSerenade/easycrypto
+module github.com/code-serenade/easycrypto
 
 go 1.22.3
