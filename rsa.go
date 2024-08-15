@@ -114,7 +114,7 @@ func RSASign(privKey []byte, data []byte) (sign string, err error) {
 		}
 	}
 
-	signature, err := rsa.SignPKCS1v15(rand.Reader, priv, crypto.SHA256, hashed)
+	signature, err := rsa.SignPKCS1v15(rand.Reader, priv, hash, hashed)
 	if err != nil {
 		return
 	}
@@ -127,6 +127,70 @@ func RSASign(privKey []byte, data []byte) (sign string, err error) {
 func RSAVerify(pubKey, data []byte, base64Sign string) error {
 	pubKey = []byte(FormatRSAPublicKey(string(pubKey)))
 	hash := crypto.SHA256
+	h := hash.New()
+	h.Write(data)
+	hashed := h.Sum(nil)
+	block, _ := pem.Decode(pubKey)
+	if block == nil {
+		return fmt.Errorf("public key error")
+	}
+	pubInterface, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return err
+	}
+	pub := pubInterface.(*rsa.PublicKey)
+
+	sign, err := base64.StdEncoding.DecodeString(base64Sign)
+	if err != nil {
+		return err
+	}
+
+	return rsa.VerifyPKCS1v15(pub, hash, hashed, sign)
+}
+
+// RSASign signs the given data with the provided PEM-encoded RSA private key.
+func RSASignWithSHA1(privKey []byte, data []byte) (sign string, err error) {
+	privKey = []byte(FormatRSAPrivKey(string(privKey)))
+	hash := crypto.SHA1
+	h := hash.New()
+	h.Write(data)
+	hashed := h.Sum(nil)
+
+	block, _ := pem.Decode(privKey)
+	if block == nil {
+		err = errors.New("failed to decode PEM block containing the key")
+		return
+	}
+
+	// First, try to parse as a PKCS1 private key
+	var priv *rsa.PrivateKey
+	if priv, err = x509.ParsePKCS1PrivateKey(block.Bytes); err != nil {
+		// If that fails, try to parse as a PKCS8 private key
+		var privInterface interface{}
+		if privInterface, err = x509.ParsePKCS8PrivateKey(block.Bytes); err != nil {
+			return
+		}
+		var ok bool
+		priv, ok = privInterface.(*rsa.PrivateKey)
+		if !ok {
+			err = errors.New("not an RSA private key")
+			return
+		}
+	}
+
+	signature, err := rsa.SignPKCS1v15(rand.Reader, priv, hash, hashed)
+	if err != nil {
+		return
+	}
+
+	sign = base64.StdEncoding.EncodeToString(signature)
+	return
+}
+
+// RSAVerify verifies the given base64-encoded signature with the provided PEM-encoded RSA public key.
+func RSAVerifyWithSHA1(pubKey, data []byte, base64Sign string) error {
+	pubKey = []byte(FormatRSAPublicKey(string(pubKey)))
+	hash := crypto.SHA1
 	h := hash.New()
 	h.Write(data)
 	hashed := h.Sum(nil)
