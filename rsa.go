@@ -214,24 +214,37 @@ func RSAVerifyWithSHA1(pubKey, data []byte, base64Sign string) error {
 
 func FormatRSAPublicKey(public string) string {
 	if !strings.Contains(public, "-----BEGIN RSA PUBLIC KEY-----") {
-		// 添加头
-		public = fmt.Sprintf("-----BEGIN RSA PUBLIC KEY-----\n%s", public)
+		if !strings.Contains(public, "-----BEGIN PUBLIC KEY-----") {
+			public = fmt.Sprintf("-----BEGIN PUBLIC KEY-----\n%s", public)
+		} else {
+			public = fmt.Sprintf("-----BEGIN RSA PUBLIC KEY-----\n%s", public)
+		}
 	}
 	if !strings.Contains(public, "-----END RSA PUBLIC KEY-----") {
-		// 添加尾
-		public = fmt.Sprintf("%s\n-----END RSA PUBLIC KEY-----", public)
+		if !strings.Contains(public, "-----END PUBLIC KEY-----") {
+			public = fmt.Sprintf("%s\n-----END PUBLIC KEY-----", public)
+		} else {
+			public = fmt.Sprintf("%s\n-----END RSA PUBLIC KEY-----", public)
+		}
 	}
+
 	return public
 }
 
 func FormatRSAPrivKey(priv string) string {
 	if !strings.Contains(priv, "-----BEGIN RSA PRIVATE KEY-----") {
-		// 添加头
-		priv = fmt.Sprintf("-----BEGIN RSA PRIVATE KEY-----\n%s", priv)
+		if !strings.Contains(priv, "-----BEGIN PRIVATE KEY-----") {
+			priv = fmt.Sprintf("-----BEGIN PRIVATE KEY-----\n%s", priv)
+		} else {
+			priv = fmt.Sprintf("-----BEGIN RSA PRIVATE KEY-----\n%s", priv)
+		}
 	}
 	if !strings.Contains(priv, "-----END RSA PRIVATE KEY-----") {
-		// 添加尾
-		priv = fmt.Sprintf("%s\n-----END RSA PRIVATE KEY-----", priv)
+		if !strings.Contains(priv, "-----END PRIVATE KEY-----") {
+			priv = fmt.Sprintf("%s\n-----END PRIVATE KEY-----", priv)
+		} else {
+			priv = fmt.Sprintf("%s\n-----END RSA PRIVATE KEY-----", priv)
+		}
 	}
 	return priv
 }
